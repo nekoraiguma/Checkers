@@ -24,14 +24,16 @@ public:
     {
     }
 
-    // draws start board
+    // инициализация и отрисовка начального состояния доски
     int start_draw()
     {
+        // Инициализация SDL2
         if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
         {
             print_exception("SDL_Init can't init SDL2 lib");
             return 1;
         }
+        // Если размеры окна не заданы, используем размеры экрана
         if (W == 0 || H == 0)
         {
             SDL_DisplayMode dm;
@@ -44,18 +46,21 @@ public:
             W -= W / 15;
             H = W;
         }
+        // создание окна
         win = SDL_CreateWindow("Checkers", 0, H / 30, W, H, SDL_WINDOW_RESIZABLE);
         if (win == nullptr)
         {
             print_exception("SDL_CreateWindow can't create window");
             return 1;
         }
+        // создание рендера
         ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
         if (ren == nullptr)
         {
             print_exception("SDL_CreateRenderer can't create renderer");
             return 1;
         }
+        // Загрузка текстур для доски, фигур и кнопок
         board = IMG_LoadTexture(ren, board_path.c_str());
         w_piece = IMG_LoadTexture(ren, piece_white_path.c_str());
         b_piece = IMG_LoadTexture(ren, piece_black_path.c_str());
@@ -68,12 +73,13 @@ public:
             print_exception("IMG_LoadTexture can't load main textures from " + textures_path);
             return 1;
         }
+        // Получнение размеров рендера и создание начальной марицы доски
         SDL_GetRendererOutputSize(ren, &W, &H);
         make_start_mtx();
         rerender();
         return 0;
     }
-
+    // Перерисовки доски (сброс состояния)
     void redraw()
     {
         game_results = -1;
@@ -83,7 +89,7 @@ public:
         clear_active();
         clear_highlight();
     }
-
+    // Перемещние фигуры на доске
     void move_piece(move_pos turn, const int beat_series = 0)
     {
         if (turn.xb != -1)
@@ -92,7 +98,7 @@ public:
         }
         move_piece(turn.x, turn.y, turn.x2, turn.y2, beat_series);
     }
-
+    // Перемещение фгуры на доске (внутренняя реализация)
     void move_piece(const POS_T i, const POS_T j, const POS_T i2, const POS_T j2, const int beat_series = 0)
     {
         if (mtx[i2][j2])
@@ -109,13 +115,13 @@ public:
         drop_piece(i, j);
         add_history(beat_series);
     }
-
+    // Удаление фигуры с доски
     void drop_piece(const POS_T i, const POS_T j)
     {
         mtx[i][j] = 0;
         rerender();
     }
-
+    // Превращение фигуры в королеву
     void turn_into_queen(const POS_T i, const POS_T j)
     {
         if (mtx[i][j] == 0 || mtx[i][j] > 2)
@@ -125,6 +131,8 @@ public:
         mtx[i][j] += 2;
         rerender();
     }
+
+    // Получение текущего состояния доски
     vector<vector<POS_T>> get_board() const
     {
         return mtx;
